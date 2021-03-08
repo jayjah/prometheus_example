@@ -1,4 +1,4 @@
-# Demo of rest-server with prometheus and grafana
+# Demo of prometheus and grafana
 version: '3.2'
 
 services:
