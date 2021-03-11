@@ -14,10 +14,12 @@ services:
     volumes:
       - prometheusdata:/prometheus
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./alert.rules:/etc/prometheus/alert.rules
     links:
       - cadvisor:cadvisor
       - node-exporter:node-exporter
       - postgres-exporter:postgres-exporter
+      - alertmanager:alertmanager
     depends_on:
       - cadvisor
       - node-exporter
@@ -104,10 +106,35 @@ services:
     environment:
       POSTGRES_PASSWORD: "test"
       POSTGRES_USER: "test"
+      
+  alertmanager:
+    image: quay.io/prometheus/alertmanager
+    privileged: true
+    container_name: alertmanager
+    ports:
+      - 9093:9093
+    command:
+      - "--cluster.listen-address="
+      - "--config.file=/alertmanager.yaml"
+    volumes:
+      - ./alertmanager.yaml:/alertmanager.yaml
+    #depends_on:
+    #  - prometheus
+    restart: unless-stopped
+
+  sentry-alert:
+    image: mikeroll/alertmanager-sentry-gateway:latest
+    container_name: sentry-alert
+    ports:
+      - 9096:9096
+    command:
+      - "--dsn=https://"
+    depends_on:
+      - alertmanager
+    restart: unless-stopped
 
 volumes:
   prometheusdata:
     driver: local
   grafanadata:
     driver: local
-
